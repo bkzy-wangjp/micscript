@@ -1,5 +1,5 @@
 // script.go
-package micscript
+package script
 
 import (
 	_ "micscript/calc"
