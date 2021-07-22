@@ -1,9 +1,7 @@
 // script.go
-package main
+package micscript
 
 import (
-	"fmt"
-
 	_ "micscript/calc"
 	_ "micscript/engineauth"
 	_ "micscript/extable"
@@ -12,7 +10,3 @@ import (
 	_ "micscript/regression"
 	_ "micscript/statistic"
 )
-
-func main() {
-	fmt.Println("Hello World!")
-}
