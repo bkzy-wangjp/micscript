@@ -1,4 +1,4 @@
-module github.com/bkzy/micscript
+module micscript
 
 go 1.16
 
