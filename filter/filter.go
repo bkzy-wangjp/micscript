@@ -4,7 +4,7 @@ package filter
 import (
 	"fmt"
 
-	"micscript/numgo"
+	"github.com/bkzy/micscript/numgo"
 )
 
 /***********************************************

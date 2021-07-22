@@ -2,11 +2,11 @@
 package script
 
 import (
-	_ "micscript/calc"
-	_ "micscript/engineauth"
-	_ "micscript/extable"
-	_ "micscript/filter"
-	_ "micscript/numgo"
-	_ "micscript/regression"
-	_ "micscript/statistic"
+	_ "github.com/bkzy/micscript/calc"
+	_ "github.com/bkzy/micscript/engineauth"
+	_ "github.com/bkzy/micscript/extable"
+	_ "github.com/bkzy/micscript/filter"
+	_ "github.com/bkzy/micscript/numgo"
+	_ "github.com/bkzy/micscript/regression"
+	_ "github.com/bkzy/micscript/statistic"
 )

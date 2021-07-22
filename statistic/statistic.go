@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"micscript/filter"
+	"github.com/bkzy/micscript/filter"
 
-	"micscript/numgo"
+	"github.com/bkzy/micscript/numgo"
 )
 
 /************************************************************
