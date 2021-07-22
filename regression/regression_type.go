@@ -1,7 +1,7 @@
 // regression project regression.go
 package regression
 
-import "micscript/numgo"
+import "github.com/bkzy/micscript/numgo"
 
 type Regre struct {
 	Ys       numgo.Array  //因变量数列

@@ -7,7 +7,7 @@ import (
 	"math/cmplx"
 	"strings"
 
-	"micscript/numgo"
+	"github.com/bkzy/micscript/numgo"
 )
 
 const (

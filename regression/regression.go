@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"math"
 
-	"micscript/numgo"
+	"github.com/bkzy/micscript/numgo"
 )
 
 //********************************************************************************
