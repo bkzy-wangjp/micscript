@@ -4,7 +4,7 @@ package filter
 import (
 	"testing"
 
-	"micscript/numgo"
+	"github.com/bkzy/micscript/numgo"
 )
 
 func TestNmoalizaton(t *testing.T) {
