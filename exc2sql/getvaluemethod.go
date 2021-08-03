@@ -1,4 +1,4 @@
-package exc2db
+package exc2sql
 
 import (
 	"time"

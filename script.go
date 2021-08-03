@@ -2,6 +2,7 @@
 package mics
 
 import (
+	"reflect"
 	"time"
 )
 
@@ -116,4 +117,29 @@ func StringsCompiler(slices_a []string, slices_b []string) bool {
 		}
 	}
 	return true
+}
+
+/****************************************************
+功能：判断元素在数组、Map中是否存在
+输入：元素、数组或者Map、Slice
+输出：存在输出true，不存在输出false
+说明：对于数组、Slice，判断的是值是否存在，对于Map，判断的是Key是否存在
+时间：2019年12月15日
+编辑：wang_jp
+****************************************************/
+func IsExistItem(element interface{}, target interface{}) bool {
+	targetValue := reflect.ValueOf(target)
+	switch reflect.TypeOf(target).Kind() {
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < targetValue.Len(); i++ {
+			if targetValue.Index(i).Interface() == element {
+				return true
+			}
+		}
+	case reflect.Map:
+		if targetValue.MapIndex(reflect.ValueOf(element)).IsValid() {
+			return true
+		}
+	}
+	return false
 }
