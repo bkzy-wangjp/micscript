@@ -120,15 +120,15 @@ func Test_OpenFile(t *testing.T) {
 		{config_col},
 	}
 	for _, tt := range tests {
-		ef, err := newExcelFile(tt.cfg)
+		ef, err := NewExcelFile(tt.cfg)
 		if err != nil {
 			t.Error(err)
 		} else {
-			err := ef.openFile()
+			err := ef.OpenFile()
 			if err != nil {
 				t.Error(err)
 			} else {
-				dbv, err := ef.getValues()
+				dbv, err := ef.GetValues()
 				if err != nil {
 					t.Error(err)
 				} else {

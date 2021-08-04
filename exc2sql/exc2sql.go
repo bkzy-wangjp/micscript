@@ -10,15 +10,15 @@ import (
 )
 
 func ExcelToSql(cfg string) ([]string, error) {
-	ef, err := newExcelFile(cfg)
+	ef, err := NewExcelFile(cfg)
 	if err != nil {
 		return nil, err
 	}
-	err = ef.openFile()
+	err = ef.OpenFile()
 	if err != nil {
 		return nil, err
 	}
-	dbvs, err := ef.getValues()
+	dbvs, err := ef.GetValues()
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func ExcelToSql(cfg string) ([]string, error) {
 }
 
 //通过配置文件创建对象
-func newExcelFile(cfg string) (*ExcelFile, error) {
+func NewExcelFile(cfg string) (*ExcelFile, error) {
 	ef := new(ExcelFile)
 	err := json.Unmarshal([]byte(cfg), ef)
 	if err != nil {
@@ -47,7 +47,7 @@ func newExcelFile(cfg string) (*ExcelFile, error) {
 }
 
 //打开excel文件
-func (ef *ExcelFile) openFile() error {
+func (ef *ExcelFile) OpenFile() error {
 	var err error
 	if len(ef.Password) > 0 {
 		ef.exfile, err = excelize.OpenFile(ef.FileName, excelize.Options{Password: ef.Password})
@@ -61,7 +61,7 @@ func (ef *ExcelFile) openFile() error {
 }
 
 //根据配置获取excel中的数据
-func (ef *ExcelFile) getValues() ([]*DbValues, error) {
+func (ef *ExcelFile) GetValues() ([]*DbValues, error) {
 	switch ef.SyncType {
 	case "cell":
 		return ef.getcellsvalues()
