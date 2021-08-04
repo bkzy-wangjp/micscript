@@ -2,6 +2,8 @@
 package mics
 
 import (
+	"crypto/md5"
+	"fmt"
 	"reflect"
 	"time"
 )
@@ -142,4 +144,86 @@ func IsExistItem(element interface{}, target interface{}) bool {
 		}
 	}
 	return false
+}
+
+/*************************************************
+功能:对字符串进行MD5加密
+输入:待加密字符串
+输出:加密后的字符串
+说明:
+编辑:wang_jp
+时间:2020年3月12日
+*************************************************/
+func Md5str(strs ...string) string {
+	var str string
+	for _, s := range strs {
+		str += s
+	}
+	data := []byte(str)
+	has := md5.Sum(data)
+	md5str := fmt.Sprintf("%x", has)
+	return md5str
+}
+
+/*************************************************
+功能:对key为string类型的map按key进行排序
+输入:待排序的map,排序方式:{desc:按照[z-a]逆向排序,asc:按照[a-z]正向排序(默认)}
+输出:排序后的key值切片
+说明:
+编辑:wang_jp
+时间:2021年8月4日
+*************************************************/
+func SortStringMap(mp map[string]string, orderby ...string) []string {
+	var keys []string
+	for key := range mp {
+		keys = append(keys, key)
+	}
+	SortStringSlice(keys, orderby...)
+	return keys
+}
+
+/*************************************************
+功能:对字符串切片进行排序
+输入:待排序的字符串切片,排序方式:{desc:按照[z-a]逆向排序,asc:按照[a-z]正向排序}
+输出:无
+说明:排序后的结果存储在输入切片中
+编辑:wang_jp
+时间:2021年8月4日
+*************************************************/
+func SortStringSlice(values []string, orderby ...string) {
+	oder := "asc"
+	if len(orderby) > 0 {
+		oder = orderby[0]
+	}
+	vLen := len(values)
+	flag := true
+	if oder == "asc" {
+		for i := 0; i < vLen-1; i++ {
+			flag = true
+			for j := 0; j < vLen-i-1; j++ {
+				if values[j] > values[j+1] {
+					values[j], values[j+1] = values[j+1], values[j]
+					flag = false
+					continue
+				}
+			}
+			if flag {
+				break
+			}
+		}
+	} else {
+		for i := 0; i < vLen-1; i++ {
+			flag = true
+			for j := 0; j < vLen-i-1; j++ {
+				if values[j] < values[j+1] {
+					values[j], values[j+1] = values[j+1], values[j]
+					flag = false
+					continue
+				}
+			}
+			if flag {
+				break
+			}
+		}
+	}
 }
