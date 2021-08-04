@@ -37,9 +37,7 @@ func RealArr2ComplexsArr(arr Array) ComplexArray {
 ***********************************************/
 func (cmps ComplexArray) Copy() ComplexArray {
 	var res ComplexArray
-	for _, c := range cmps {
-		res = append(res, c)
-	}
+	res = append(res, cmps...)
 	return res
 }
 
@@ -144,7 +142,7 @@ func (cmps ComplexArray) Div(b ComplexArray, inplace ...bool) ComplexArray {
 			res = append(res, make(ComplexArray, blen-alen)...) //扩展被除数
 		} else {
 			n := make(ComplexArray, alen-blen)
-			for i, _ := range n {
+			for i := range n {
 				n[i] = 1 + 0i //新的除数为1+0i
 			}
 			nb = append(nb, n...) //扩展除数
@@ -449,7 +447,7 @@ func (cmps ComplexArray) Fft(args ...bool) ComplexArray {
 		n = p
 	}
 	rev := make([]int, n)
-	for i, _ := range rev { //初始化rev
+	for i := range rev { //初始化rev
 		rev[i] = i
 	}
 	for i := 0; i < n-1; i++ {

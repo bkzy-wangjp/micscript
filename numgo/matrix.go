@@ -90,7 +90,7 @@ func InitAsIdentity(n int) Matrix {
 	var mat Matrix
 	for i := 0; i < n; i++ {
 		row := make([]float64, n)
-		for k, _ := range row {
+		for k := range row {
 			if i == k {
 				row[k] = 1
 			}
@@ -194,7 +194,7 @@ func (mat Matrix) Copy() Matrix {
 func (m Matrix) LeftSquare2Triu(confg ...bool) (Matrix, error) {
 	n, c := m.RowsAndCols() //矩阵的行数
 	if c < n {
-		return nil, fmt.Errorf("The number of rows of a matrix cannot be greater than the number of columns.[矩阵的行数不可大于列数]")
+		return nil, fmt.Errorf("the number of rows of a matrix cannot be greater than the number of columns.[矩阵的行数不可大于列数]")
 	}
 	mat := m.Copy()
 	return_err := false
@@ -216,8 +216,8 @@ func (m Matrix) LeftSquare2Triu(confg ...bool) (Matrix, error) {
 					break //跳出j循环
 				}
 			}
-			if ok == false && return_err == true {
-				return nil, fmt.Errorf("The matrix is not invertible and can not be converted to upper triangular matrix.[矩阵不可逆,不能转换为上三角阵]")
+			if !ok && return_err {
+				return nil, fmt.Errorf("the matrix is not invertible and can not be converted to upper triangular matrix.[矩阵不可逆,不能转换为上三角阵]")
 			}
 		}
 		for j := i + 1; j < n; j++ {
@@ -282,10 +282,10 @@ func (m Matrix) Inverse() (Matrix, error) {
 	if n > 0 {
 		cCnt = len(m[0])            //矩阵的列数
 		if cCnt == 0 || n != cCnt { //列数等于0,或者行列不相等
-			return nil, fmt.Errorf("The matrix must be a square matrix.[矩阵必须是方阵]")
+			return nil, fmt.Errorf("the matrix must be a square matrix.[矩阵必须是方阵]")
 		}
 	} else { //行数等于0
-		return nil, fmt.Errorf("The number of rows of a matrix must be greater than zero.[矩阵的行数必须大于零]")
+		return nil, fmt.Errorf("the number of rows of a matrix must be greater than zero.[矩阵的行数必须大于零]")
 	}
 
 	//建立n*2n的矩阵,左半部分为输入矩阵,右半部分为单位矩阵
@@ -349,7 +349,7 @@ func (ma Matrix) Mul(mb Matrix) (Matrix, error) { //求矩阵乘积
 		}
 		return res, nil
 	} else {
-		return nil, fmt.Errorf("The number of columns of matrix A must be equal to the number of rows of matrix B[矩阵A的列数必须与矩阵B的行数相等]")
+		return nil, fmt.Errorf("the number of columns of matrix A must be equal to the number of rows of matrix B[矩阵A的列数必须与矩阵B的行数相等]")
 	}
 }
 
@@ -383,7 +383,7 @@ func (ma Matrix) Add(mb Matrix) (Matrix, error) {
 		}
 		return res, nil
 	} else {
-		return nil, fmt.Errorf("Matrices A and B must have the same dimension[两个矩阵的维数必须相同]")
+		return nil, fmt.Errorf("matrices A and B must have the same dimension[两个矩阵的维数必须相同]")
 	}
 }
 
@@ -417,7 +417,7 @@ func (ma Matrix) Sub(mb Matrix) (Matrix, error) {
 		}
 		return res, nil
 	} else {
-		return nil, fmt.Errorf("Matrices A and B must have the same dimension[两个矩阵的维数必须相同]")
+		return nil, fmt.Errorf("matrices A and B must have the same dimension[两个矩阵的维数必须相同]")
 	}
 }
 
@@ -432,7 +432,7 @@ func (m Matrix) SubFromIdentityMatrix() (Matrix, error) {
 	if m.IsSquareMatix() {
 		return InitAsIdentity(len(m)).Sub(m)
 	} else {
-		return nil, fmt.Errorf("The matrix must be square matrix[必须是方阵才可以使用该方法]")
+		return nil, fmt.Errorf("the matrix must be square matrix[必须是方阵才可以使用该方法]")
 	}
 }
 
@@ -527,7 +527,7 @@ func (m Matrix) Transpose() Matrix {
 **********************************************/
 func (m Matrix) MulScalar(scalar float64) {
 	for i, mr := range m {
-		for j, _ := range mr {
+		for j := range mr {
 			m[i][j] *= scalar
 		}
 	}
