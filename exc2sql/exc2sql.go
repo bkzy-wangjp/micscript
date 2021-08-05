@@ -41,7 +41,7 @@ func NewExcelFile(cfg string) (*ExcelFile, error) {
 		return nil, fmt.Errorf("ColNames in Row error:[%s]", err.Error())
 	}
 	if err := ef.unmarshal_column_rowmaps(); err != nil {
-		return nil, fmt.Errorf("FirstCol in Column error:[%s]", err.Error())
+		return nil, err
 	}
 	return ef, nil
 }
@@ -54,30 +54,75 @@ func (ef *ExcelFile) OpenFile() error {
 	} else {
 		ef.exfile, err = excelize.OpenFile(ef.FileName)
 	}
+	if err != nil {
+		err = fmt.Errorf("open file fail:[%s]", err.Error())
+		return err
+	}
 	if len(ef.Sheets) == 0 {
 		ef.Sheets = ef.exfile.GetSheetList()
 	}
-	return err
+	return nil
 }
 
 //根据配置获取excel中的数据
 func (ef *ExcelFile) GetValues() ([]*DbValues, error) {
-	switch ef.SyncType {
-	case "cell":
-		return ef.getcellsvalues()
-	case "row":
-		return ef.getrowvalues()
-	case "column":
-		return ef.getcolvalues()
-	default:
-		return nil, nil
+	var dbvs []*DbValues
+	cells, err := ef.getcellsvalues()
+	if err != nil {
+		return nil, err
 	}
+	for _, v := range cells {
+		if v != nil {
+			dbvs = append(dbvs, v)
+		}
+	}
+
+	rows, err := ef.getrowvalues()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range rows {
+		if v != nil {
+			dbvs = append(dbvs, v)
+		}
+	}
+	cols, err := ef.getcolvalues()
+	if err != nil {
+		return nil, err
+	}
+	for _, v := range cols {
+		if v != nil {
+			dbvs = append(dbvs, v)
+		}
+	}
+	//防止一次性插入过多数据
+	maxlen := 65000
+	for i, v := range dbvs {
+		if len(v.ColNames)*len(v.Values) > maxlen {
+			mrow := maxlen / len(v.ColNames)
+			var rslts []*DbValues
+			for j := 0; j < len(v.Values); j += mrow {
+				rslt := new(DbValues)
+				rslt.TableName = v.TableName
+				rslt.ColNames = v.ColNames
+				ed := j + mrow
+				if ed > len(v.Values) {
+					ed = len(v.Values)
+				}
+				rslt.Values = v.Values[j:ed]
+				rslts = append(rslts, rslt)
+			}
+			dbvs = append(dbvs[:i], dbvs[i+1:]...)
+			dbvs = append(dbvs, rslts...)
+		}
+	}
+	return dbvs, nil
 }
 
 //解析按单元格同步时配置的单元格map
 func (ef *ExcelFile) unmarshal_cell_axismaps() {
-	if ef.SyncType == "cell" {
-		for i, cell := range ef.Cells {
+	for i, cell := range ef.Cells {
+		if cell != nil {
 			for excel_axis, dbtb_col := range cell.Axismaps {
 				ef.Cells[i].axis = append(ef.Cells[i].axis, excel_axis)
 				ef.Cells[i].DbDest.colnames = append(ef.Cells[i].DbDest.colnames, dbtb_col)
@@ -88,7 +133,7 @@ func (ef *ExcelFile) unmarshal_cell_axismaps() {
 
 //解析按行同步时配置的列名map
 func (ef *ExcelFile) unmarshal_row_colmaps() error {
-	if ef.SyncType == "row" {
+	if ef.Row != nil {
 		for excel_col, dbtb_col := range ef.Row.Colmaps {
 			n, err := excelize.ColumnNameToNumber(excel_col)
 			if err != nil {
@@ -104,18 +149,39 @@ func (ef *ExcelFile) unmarshal_row_colmaps() error {
 
 //解析按行同步时配置的列名map
 func (ef *ExcelFile) unmarshal_column_rowmaps() error {
-	if ef.SyncType == "column" {
+	if ef.Column != nil {
 		var err error
 		//获取首列索引
-		ef.Column.firstcolindex, err = excelize.ColumnNameToNumber(ef.Column.FirstCol)
-		if err != nil {
-			return err
+		if ef.Column.FirstCol != "" {
+			ef.Column.firstcolindex, err = excelize.ColumnNameToNumber(ef.Column.FirstCol)
+			if err != nil {
+				return fmt.Errorf("FirstCol in Column error:[%s]", err.Error())
+			}
+		} else {
+			ef.Column.firstcolindex = 0
+		}
+		//获取末尾列索引
+		if ef.Column.LastCol != "" {
+			ef.Column.lastcolindex, err = excelize.ColumnNameToNumber(ef.Column.LastCol)
+			if err != nil {
+				return fmt.Errorf("LastCol in Column error:[%s]", err.Error())
+			}
+		} else {
+			ef.Column.lastcolindex = 0
+		}
+		//指定转换列转换为索引
+		for _, colname := range ef.Column.LoadCols {
+			colid, err := excelize.ColumnNameToNumber(colname)
+			if err != nil {
+				return fmt.Errorf("LoadCols in Column error:[%s]", err.Error())
+			}
+			ef.Column.loadcolindexs = append(ef.Column.loadcolindexs, colid)
 		}
 		//忽略列转换为索引
 		for _, colname := range ef.Column.IgnoreCols {
 			colid, err := excelize.ColumnNameToNumber(colname)
 			if err != nil {
-				return err
+				return fmt.Errorf("IgnoreCols in Column error:[%s]", err.Error())
 			}
 			ef.Column.ignorecolindexs = append(ef.Column.ignorecolindexs, colid)
 		}
@@ -189,103 +255,195 @@ func (ef *ExcelFile) getcellvalues(sheetname string, i int) (*DbValues, error) {
 
 //获取行类型的数据
 func (ef *ExcelFile) getrowvalues() ([]*DbValues, error) {
-	var dbvs []*DbValues
-	dbv := new(DbValues)
-	dbv.TableName = ef.Row.DbDest.TableName
-	dbv.ColNames = ef.Row.DbDest.colnames
-	var constv []string
-	//取常数列
-	for k, v := range ef.Row.DbDest.Consts {
-		dbv.ColNames = append(dbv.ColNames, k)
-		constv = append(constv, v)
-	}
-	for _, sheet := range ef.Sheets { //遍历sheet
-		rows, err := ef.exfile.Rows(sheet)
-		if err != nil {
-			return nil, err
+	defer func() {
+		if err := recover(); err != nil {
+			return
 		}
-		rowi := 0
-		//遍历行
-		for rows.Next() {
-			rowi += 1 //行号
-			row, err := rows.Columns()
-			if err != nil {
-				return nil, fmt.Errorf("get rows.Columns fail:[%s] ", err.Error())
-			}
-			//行号小于首行
-			if rowi < ef.Row.FirstRow {
-				continue
-			}
-			//行号是忽略行
-			if mics.IsExistItem(rowi, ef.Row.IgnoreRows) {
-				continue
-			}
-			rl := len(row)
-			var values []string
-			//根据设定的列索引，逐列取值
-			for _, colindex := range ef.Row.colindexs {
-				if colindex < rl {
-					values = append(values, row[colindex])
-				} else {
-					values = append(values, "")
+	}()
+
+	if ef.Row != nil {
+		var dbvs []*DbValues
+		dbv := new(DbValues)
+		dbv.TableName = ef.Row.DbDest.TableName
+		dbv.ColNames = ef.Row.DbDest.colnames
+		var constv []string
+		//取常数列
+		for k, v := range ef.Row.DbDest.Consts {
+			dbv.ColNames = append(dbv.ColNames, k)
+			constv = append(constv, v)
+		}
+		for _, sheet := range ef.Sheets { //遍历sheet
+			//设定了读取行的列表
+			if len(ef.Row.LoadRows) > 0 {
+				//读取每一行
+				rows, err := ef.exfile.GetRows(sheet)
+				if err != nil {
+					return nil, err
+				}
+				rcnt := len(rows) //总行数
+				//按照指定的行号遍历
+				for _, rid := range ef.Row.LoadRows {
+					var values []string
+					if rid > rcnt { //如果行号大于总行数
+						v := make([]string, len(ef.Row.colindexs))
+						values = append(values, v...) //填写为空值
+					} else { //行号不大于总行数
+						row := rows[rid-1] //获取行号指定的行数据
+						rl := len(row)     //计算行的列数
+						//按照指定的列索引，在当前行读取指定列
+						for _, colindex := range ef.Row.colindexs {
+							if colindex < rl { //列索引不大于当前行的列数
+								values = append(values, row[colindex])
+							} else { //列索引大于当前行的列数
+								values = append(values, "") //填写为空
+							}
+						}
+					}
+					//在值列表中添加常数项
+					values = append(values, constv...)
+					dbv.Values = append(dbv.Values, values)
+				}
+			} else { //没有指定具体的行
+				rows, err := ef.exfile.Rows(sheet)
+				if err != nil {
+					return nil, err
+				}
+				rowi := 0
+				//遍历行
+				for rows.Next() {
+					rowi += 1 //行号
+					row, err := rows.Columns()
+					if err != nil {
+						return nil, fmt.Errorf("get rows.Columns fail:[%s] ", err.Error())
+					}
+					//行号小于首行
+					if rowi < ef.Row.FirstRow {
+						continue
+					}
+					//如果指定了最后一行
+					if ef.Row.LastRow > 0 && rowi > ef.Row.LastRow {
+						break
+					}
+					//行号是忽略行
+					if mics.IsExistItem(rowi, ef.Row.IgnoreRows) {
+						continue
+					}
+					rl := len(row)
+					var values []string
+					//根据设定的列索引，逐列取值
+					for _, colindex := range ef.Row.colindexs {
+						if colindex < rl {
+							values = append(values, row[colindex])
+						} else {
+							values = append(values, "")
+						}
+					}
+					//在值列表中添加常数项
+					values = append(values, constv...)
+					dbv.Values = append(dbv.Values, values)
 				}
 			}
-			//在值列表中添加常数项
-			values = append(values, constv...)
-			dbv.Values = append(dbv.Values, values)
 		}
+		dbvs = append(dbvs, dbv)
+		return dbvs, nil
+	} else {
+		return nil, nil
 	}
-	dbvs = append(dbvs, dbv)
-	return dbvs, nil
+
 }
 
 //获取列类型的数据
 func (ef *ExcelFile) getcolvalues() ([]*DbValues, error) {
-	var dbvs []*DbValues
-	dbv := new(DbValues)
-	dbv.TableName = ef.Column.DbDest.TableName
-	dbv.ColNames = ef.Column.DbDest.colnames
-	var constv []string
-	//取常数列
-	for k, v := range ef.Column.DbDest.Consts {
-		dbv.ColNames = append(dbv.ColNames, k)
-		constv = append(constv, v)
-	}
-	//遍历工作表
-	for _, sheet := range ef.Sheets {
-		cols, err := ef.exfile.Cols(sheet)
-		if err != nil {
-			return dbvs, err
+	defer func() {
+		if err := recover(); err != nil {
+			return
 		}
-		coli := 0
-		//遍历列
-		for cols.Next() {
-			coli += 1
-			//未到起始列
-			if coli < ef.Column.firstcolindex {
-				continue
-			}
-			//是否忽略列
-			if mics.IsExistItem(coli, ef.Column.ignorecolindexs) {
-				continue
-			}
-			col, err := cols.Rows()
-			if err != nil {
-				return dbvs, fmt.Errorf("get cols.Rows fail:[%s]", err.Error())
-			}
-			cl := len(col)
-			var values []string
-			for _, rowindex := range ef.Column.rows {
-				if rowindex <= cl {
-					values = append(values, col[rowindex-1])
-				} else {
-					values = append(values, "")
+	}()
+
+	if ef.Column != nil {
+		var dbvs []*DbValues
+		dbv := new(DbValues)
+		dbv.TableName = ef.Column.DbDest.TableName
+		dbv.ColNames = ef.Column.DbDest.colnames
+		var constv []string
+		//取常数列
+		for k, v := range ef.Column.DbDest.Consts {
+			dbv.ColNames = append(dbv.ColNames, k)
+			constv = append(constv, v)
+		}
+		//遍历工作表
+		for _, sheet := range ef.Sheets {
+			//设定了读取列的列表
+			if len(ef.Column.LoadCols) > 0 {
+				cols, err := ef.exfile.GetCols(sheet)
+				if err != nil {
+					return dbvs, err
+				}
+				ccnt := len(cols) //总列数
+				//按照指定的列序号遍历
+				for _, colid := range ef.Column.loadcolindexs {
+					var values []string
+					if colid > ccnt { //如果列号大于总列数
+						v := make([]string, len(ef.Column.rows))
+						values = append(values, v...) //填写为空值
+					} else { //列号不大于总列数
+						col := cols[colid-1] //获取列号指定的列数据
+						rl := len(col)       //计算列的行数
+						//按照指定的行id，在当前列读取指定行
+						for _, rid := range ef.Column.rows {
+							if rid <= rl { //列索引不大于当前列的行数
+								values = append(values, col[rid-1])
+							} else { //列索引大于当前列的行数
+								values = append(values, "") //填写为空
+							}
+						}
+					}
+					//在值列表中添加常数项
+					values = append(values, constv...)
+					dbv.Values = append(dbv.Values, values)
+				}
+			} else {
+				cols, err := ef.exfile.Cols(sheet)
+				if err != nil {
+					return dbvs, err
+				}
+				coli := 0
+				//遍历列
+				for cols.Next() {
+					coli += 1
+					//未到起始列
+					if coli < ef.Column.firstcolindex {
+						continue
+					}
+					//是否忽略列
+					if mics.IsExistItem(coli, ef.Column.ignorecolindexs) {
+						continue
+					}
+					//是否到了设定的最后一列
+					if ef.Column.lastcolindex > 0 && coli > ef.Column.lastcolindex {
+						break
+					}
+					col, err := cols.Rows()
+					if err != nil {
+						return dbvs, fmt.Errorf("get cols.Rows fail:[%s]", err.Error())
+					}
+					cl := len(col)
+					var values []string
+					for _, rid := range ef.Column.rows {
+						if rid <= cl {
+							values = append(values, col[rid-1])
+						} else {
+							values = append(values, "")
+						}
+					}
+					values = append(values, constv...)
+					dbv.Values = append(dbv.Values, values)
 				}
 			}
-			values = append(values, constv...)
-			dbv.Values = append(dbv.Values, values)
 		}
+		dbvs = append(dbvs, dbv)
+		return dbvs, nil
+	} else {
+		return nil, nil
 	}
-	dbvs = append(dbvs, dbv)
-	return dbvs, nil
 }

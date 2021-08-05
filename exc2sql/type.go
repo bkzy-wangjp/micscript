@@ -8,11 +8,11 @@ type ExcelFile struct {
 	//NamePrefix  string         `json:"name_prefix"`  //文件名前缀,可以为空
 	Sheets []string `json:"sheets"` //Excel的工作表(Sheet)名称,如果为空则遍历每个Sheet
 	//SheetPrefix string         `json:"sheet_prefix"` //工作表名前缀,可以为空
-	SyncType string         `json:"sync_type"` //同步类型,{"cell":按单元格,"row":按行(固定列),"column":按列(固定行)}
-	Cells    []*Cells       `json:"cells"`     //单元格参数(仅 SyncType=cell 时有效)
-	Row      *Row           `json:"row"`       //定义行参数(仅 SyncType=row 时有效)
-	Column   *Column        `json:"column"`    //定义列参数(仅 SyncType=column 时有效)
-	exfile   *excelize.File //打开的excel文件指针
+	//SyncType string         `json:"sync_type"` //同步类型,{"cell":按单元格,"row":按行(固定列),"column":按列(固定行)}
+	Cells  []*Cells       `json:"cells"`  //单元格参数(仅 SyncType=cell 时有效)
+	Row    *Row           `json:"row"`    //定义行参数(仅 SyncType=row 时有效)
+	Column *Column        `json:"column"` //定义列参数(仅 SyncType=column 时有效)
+	exfile *excelize.File //打开的excel文件指针
 }
 
 //定义单元格
@@ -25,6 +25,8 @@ type Cells struct {
 //定义行
 type Row struct {
 	FirstRow   int               `json:"first_row"`   //第一行有效数据的行号
+	LastRow    int               `json:"last_row"`    //最后一行有效数据的行号,不限值时值为0
+	LoadRows   []int             `json:"load_rows"`   //指定需要加载的行。如果指定了需要加载的行,则FirstRow、LastRow、IgnoreRows无效
 	Colmaps    map[string]string `json:"colmaps"`     //Excel列名:数据库表列名
 	IgnoreRows []int             `json:"ignore_rows"` //忽略的行
 	DbDest     *DbDestination    `json:"db_dest"`     //目的数据库单元格
@@ -35,21 +37,25 @@ type Row struct {
 //定义列
 type Column struct {
 	FirstCol        string            `json:"first_col"`   //第一列有效数据的列名
+	LastCol         string            `json:"last_col"`    //第一列有效数据的列名
+	LoadCols        []string          `json:"load_cols"`   //指定需要加载的列。如果指定了需要加载的列,则FirstCol、LastCol、IgnoreCols无效
 	Rowmaps         map[string]string `json:"rowmaps"`     //Excel行号:数据库表列名
 	IgnoreCols      []string          `json:"ignore_cols"` //忽略的列
 	DbDest          *DbDestination    `json:"db_dest"`     //目的数据库单元格
-	rows            []int             //从Rowmaps中解析出来的行列表
+	rows            []int             //从Rowmaps中解析出来的行列表(从1开始)
 	firstcolindex   int               //第一列的索引(从1开始)
-	ignorecolindexs []int             //忽略的列的索引
+	lastcolindex    int               //最后一列的索引(从1开始)
+	loadcolindexs   []int             //指定需要加载的列的索引(从1开始)
+	ignorecolindexs []int             //忽略的列的索引(从1开始)
 }
 
 type DbDestination struct {
-	TableName   string            `json:"table_name"`   //数据库表名称
-	Consts      map[string]string `json:"consts"`       //常数项
-	TimeColumns *TimeColumns      `json:"time_columns"` //时间列的获取方法,可以为空
+	TableName   string            `json:"table_name"` //数据库表名称
+	Consts      map[string]string `json:"consts"`     //常数项
+	TimeColumns *TimeColumns      //`json:"time_columns"` //时间列的获取方法,可以为空
 	//条件,相互之间为Or的关系.
 	//可以为空,为空时INSERT数据；不为空时UPDATE数据
-	Wheres   []*Wheres `json:"wheres"`
+	Wheres   []*Wheres //`json:"wheres"`
 	colnames []string
 }
 
