@@ -9,9 +9,9 @@ type ExcelFile struct {
 	Sheets []string `json:"sheets"` //Excel的工作表(Sheet)名称,如果为空则遍历每个Sheet
 	//SheetPrefix string         `json:"sheet_prefix"` //工作表名前缀,可以为空
 	//SyncType string         `json:"sync_type"` //同步类型,{"cell":按单元格,"row":按行(固定列),"column":按列(固定行)}
-	Cells  []*Cells       `json:"cells"`  //单元格参数(仅 SyncType=cell 时有效)
-	Row    *Row           `json:"row"`    //定义行参数(仅 SyncType=row 时有效)
-	Column *Column        `json:"column"` //定义列参数(仅 SyncType=column 时有效)
+	Cells  []*Cells       `json:"cells"`  //单元格参数
+	Row    *Row           `json:"row"`    //定义行参数
+	Column *Column        `json:"column"` //定义列参数
 	exfile *excelize.File //打开的excel文件指针
 }
 
