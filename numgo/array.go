@@ -433,7 +433,7 @@ func (arr Array) BubbleSort(confg ...bool) Array {
 		values = arr
 	}
 
-	if des == false {
+	if !des {
 		for i := 0; i < vLen-1; i++ {
 			flag = true
 			for j := 0; j < vLen-i-1; j++ {
@@ -475,9 +475,7 @@ func (arr Array) BubbleSort(confg ...bool) Array {
 ***********************************************/
 func (arr Array) Copy() Array {
 	var res Array
-	for _, c := range arr {
-		res = append(res, c)
-	}
+	res = append(res, arr...)
 	return res
 }
 
@@ -712,13 +710,12 @@ func (data Array) MoveWindowFilter(n int, fillvlue ...string) Array {
 	}
 
 	var res Array
-	for i, _ := range data {
+	for i := range data {
 		ed := n + i
 		if ed > d_len {
 			ed = d_len
 		}
-		var ar Array
-		ar = data[i:ed]
+		ar := data[i:ed]
 		fv := ar.Mean()
 		switch fv_method {
 		case "mean":
@@ -886,7 +883,7 @@ func NewArray(n int) Array {
 func (a Array) Companion() (Matrix, error) {
 	alen := len(a)
 	if alen < 2 {
-		return nil, fmt.Errorf("The length of `a` must be at least 2[原始A数组的长度不能小于2]")
+		return nil, fmt.Errorf("the length of `a` must be at least 2[原始A数组的长度不能小于2] ")
 	}
 	if a[0] == 0 {
 		return nil, fmt.Errorf("a[0] must not be zero[ a[0]的值不可为0 ]")
@@ -918,7 +915,7 @@ func (a Array) Companion() (Matrix, error) {
 ***********************************************/
 func (a Array) MulArray(b Array) (Array, error) {
 	if len(a) != len(b) {
-		return nil, fmt.Errorf("Both arrays must be the same length.[两个数组的长度必须相同]")
+		return nil, fmt.Errorf("both arrays must be the same length.[两个数组的长度必须相同]")
 	}
 	var c Array
 	for i, v := range a {
@@ -937,7 +934,7 @@ func (a Array) MulArray(b Array) (Array, error) {
 ***********************************************/
 func (a Array) DivArray(b Array) (Array, error) {
 	if len(a) != len(b) {
-		return nil, fmt.Errorf("Both arrays must be the same length.[两个数组的长度必须相同]")
+		return nil, fmt.Errorf("both arrays must be the same length.[两个数组的长度必须相同]")
 	}
 	var c Array
 	for i, v := range b {
@@ -960,7 +957,7 @@ func (a Array) DivArray(b Array) (Array, error) {
 ***********************************************/
 func (a Array) AddArray(b Array) (Array, error) {
 	if len(a) != len(b) {
-		return nil, fmt.Errorf("Both arrays must be the same length.[两个数组的长度必须相同]")
+		return nil, fmt.Errorf("both arrays must be the same length.[两个数组的长度必须相同]")
 	}
 	var c Array
 	for i, v := range b {
@@ -979,7 +976,7 @@ func (a Array) AddArray(b Array) (Array, error) {
 ***********************************************/
 func (a Array) SubArray(b Array) (Array, error) {
 	if len(a) != len(b) {
-		return nil, fmt.Errorf("Both arrays must be the same length.[两个数组的长度必须相同]")
+		return nil, fmt.Errorf("both arrays must be the same length.[两个数组的长度必须相同]")
 	}
 	var c Array
 	for i, v := range b {
@@ -1101,7 +1098,7 @@ func (a Array) Fft(inv ...bool) Array {
 	car := RealArr2ComplexsArr(a)
 	car.Fft(true, invs)
 	res := a.Copy()
-	for i, _ := range res {
+	for i := range res {
 		if i == 0 {
 			res[i] = real(car[i])
 		} else {

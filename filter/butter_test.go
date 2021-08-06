@@ -5,7 +5,7 @@ import (
 	"math"
 	"testing"
 
-	"micscript/numgo"
+	"github.com/bkzy/micscript/numgo"
 )
 
 func TestButtap(t *testing.T) {

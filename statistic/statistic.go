@@ -8,6 +8,7 @@ import (
 
 	"github.com/bkzy/micscript/filter"
 
+	"github.com/bkzy/micscript"
 	"github.com/bkzy/micscript/numgo"
 )
 
@@ -160,73 +161,7 @@ func (tsds Tsds) Statistics(cfg int, group ...int) StatisticData {
 编辑:wang_jp
 ************************************************************/
 func TimeParse(s string, loc ...*time.Location) (time.Time, error) {
-	location := time.Local
-	if len(loc) > 0 {
-		for _, v := range loc {
-			location = v
-		}
-	}
-	t, err := time.ParseInLocation("2006-01-02 15:04:05", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006-01-02 15:04", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006-1-2 15:04:05", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006-1-2 15:04", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006/01/02 15:04:05", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006/01/02 15:04", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006/1/2 15:04:05", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006/1/2 15:04", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006-01-02T15:04:05Z", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006-01-02T15:04:05", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006-01-02T15:04", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006-1-2T15:04:05Z", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("2006-1-2T15:04", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("20060102150405", s, location)
-	if err == nil {
-		return t, nil
-	}
-	t, err = time.ParseInLocation("200601021504", s, location)
-	if err == nil {
-		return t, nil
-	}
-	return t, err
+	return mics.TimeParse(s, loc...)
 }
 
 /************************************************************
