@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/360EntSecGroup-Skylar/excelize/v2"
 	mics "github.com/bkzy/micscript"
+	"github.com/xuri/excelize/v2"
 )
 
 func ExcelToSql(cfg string) ([]string, error) {
