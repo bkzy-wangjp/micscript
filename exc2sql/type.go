@@ -1,6 +1,6 @@
 package exc2sql
 
-import "github.com/360EntSecGroup-Skylar/excelize/v2"
+import "github.com/xuri/excelize/v2"
 
 type ExcelFile struct {
 	FileName string `json:"file_name"` //文件路径(含名称)
