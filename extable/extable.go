@@ -41,6 +41,7 @@ func (t *Table) OpenFile(filename string, calcformula bool, calcdeep int, sheet 
 	if err != nil {
 		return fmt.Errorf("读取工作表内容失败:[%s]", err.Error())
 	}
+	colmap := make(map[string]string)
 	//var totalwidth float64 = 0
 	for ir, row := range rows { //遍历所有行
 		tr := new(TableRow)                       //新建行
@@ -65,11 +66,12 @@ func (t *Table) OpenFile(filename string, calcformula bool, calcdeep int, sheet 
 			if err != nil {                             //读取失败
 				v = true //默认可见
 			}
-			//第一行的时候读取列属性
-			if ir == 0 { //是第一行
+			//列名是否已经存在
+			if _, ok := colmap[caxis]; !ok { //不存在
 				tc := new(TableCol)
 				tc.Init(caxis, w, v)
 				t.Cols = append(t.Cols, *tc) //添加列到表格中
+				colmap[caxis] = caxis
 			}
 			axis, _ := excelize.CoordinatesToCellName(ic+1, ir+1) //坐标号
 			styleindex, err := f.GetCellStyle(sheetname, axis)    //获取样式索引
@@ -162,123 +164,6 @@ func (t *Table) CalcFormula(f *excelize.File, sheetname string, calcdeep int) {
 		t.CalcFormula(f, sheetname, calcdeep)
 	}
 }
-
-// func (t *Table) CalcFormula() {
-// 	reg_func := regexp.MustCompile(_FUNC)
-// 	reg_cell := regexp.MustCompile(_cell)
-// 	reg_func_para := regexp.MustCompile(fmt.Sprintf("%s|%s", _cell, _number)) //Excel函数参数
-
-// 	var haveuncalc bool               //还有未被计算的单元格
-// 	for row, tbrow := range t.Cells { //遍历行
-// 		for col, cell := range tbrow { //遍历列
-// 			if cell.NeedCalcFormula == false || len(cell.Formula) == 0 { //不含需要计算的公式
-// 				continue
-// 			}
-
-// 			var tokens string //需要送给计算器的元组字符串
-// 			var uncalc bool   //依赖单元格未被计算
-// 			exfm := new(Formula)
-// 			ok := exfm.GetTokens(cell.Formula) //提取公式中的元组
-// 			if ok == false {                   //不可计算
-// 				t.Cells[row][col].Value = fmt.Sprint("#VALUE!")
-// 				t.Cells[row][col].NeedCalcFormula = false
-// 				continue
-// 			}
-// 			//fmt.Println(exfm.TokenStr)          //==========================
-// 			for _, tok := range exfm.TokenStr { //遍历提取到的元组
-// 				var tokvalue string
-
-// 				if reg_func.MatchString(tok) { //匹配Excel函数
-// 					var functype string
-// 					//判断函数类型
-// 					if strings.Contains(tok, "SUM") {
-// 						functype = "SUM"
-// 					} else {
-// 						if strings.Contains(tok, "AVERAGE") {
-// 							functype = "AVERAGE"
-// 						} else {
-// 							if strings.Contains(tok, "MIN") {
-// 								functype = "MIN"
-// 							} else {
-// 								if strings.Contains(tok, "MAX") {
-// 									functype = "MAX"
-// 								} else {
-// 									if strings.Contains(tok, "MEDIAN") {
-// 										functype = "MEDIAN"
-// 									} else {
-// 										if strings.Contains(tok, "PRODUCT") {
-// 											functype = "PRODUCT"
-// 										}
-// 									}
-// 								}
-// 							}
-// 						}
-// 					}
-// 					paras := reg_func_para.FindAllString(tok, -1) //提取函数参数
-// 					var vals numgo.Array
-// 					for _, p := range paras {
-// 						vstr, uc, canuse := t.GetCellValue(p)
-// 						if uc { //依赖单元格尚未计算
-// 							uncalc = uc
-// 							break //跳出循环
-// 						}
-// 						if canuse == false {
-// 							continue
-// 						}
-// 						v, e := strconv.ParseFloat(vstr, 64) //转换为浮点数
-// 						if e == nil {
-// 							vals = append(vals, v)
-// 						}
-// 					}
-// 					if uncalc { //依赖单元格尚未计算
-// 						break //跳出循环
-// 					}
-// 					//fmt.Println("数组", vals) //==========================
-// 					switch functype {
-// 					case "SUM":
-// 						tokvalue = fmt.Sprint(vals.Sum())
-// 					case "AVERAGE":
-// 						tokvalue = fmt.Sprint(vals.Mean())
-// 					case "MIN":
-// 						tokvalue = fmt.Sprint(vals.Min())
-// 					case "MAX":
-// 						tokvalue = fmt.Sprint(vals.Max())
-// 					case "MEDIAN":
-// 						tokvalue = fmt.Sprint(vals.Median())
-// 					case "PRODUCT":
-// 						tokvalue = fmt.Sprint(vals.Product())
-// 					default:
-// 					}
-// 				} else {
-// 					if reg_cell.MatchString(tok) { //匹配单元格
-// 						tokvalue, uncalc, _ = t.GetCellValue(tok)
-// 						if uncalc { //依赖单元格尚未计算
-// 							break //跳出循环
-// 						}
-// 					} else {
-// 						tokvalue = tok
-// 					}
-// 				}
-// 				tokens += tokvalue
-// 			}
-// 			if uncalc { //依赖单元格尚未计算
-// 				haveuncalc = true
-// 				break //跳出循环
-// 			}
-// 			//fmt.Println("Tokens", tokens) //=================================================
-// 			cellv, err := calc.Calc(tokens)
-// 			//fmt.Println("计算结果和错误", cellv, err) //=================================================
-// 			if err == nil {
-// 				t.Cells[row][col].Value = fmt.Sprint(cellv)
-// 			}
-// 			t.Cells[row][col].NeedCalcFormula = false
-// 		}
-// 	}
-// 	if haveuncalc {
-// 		haveuncalc = false
-// 		t.CalcFormula()
-// 	}
-// }
 
 /********************************************
 功能:获取单元格的值

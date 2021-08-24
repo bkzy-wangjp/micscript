@@ -4,21 +4,20 @@ import (
 	"testing"
 )
 
-/*
-func TestTableInit(t *testing.T) {
+func TestFomatToHtml(t *testing.T) {
 	table := new(Table)
-	err := table.OpenFile("Book1.xlsx", true, 15, "Sheet1")
+	err := table.OpenFile("testfile/MicForm-3.xlsx", true, 15, "Sheet1")
 	if err != nil {
 		t.Error(err.Error())
 	} else {
-		t.Logf("%+v\n", table)
-		for i, cell := range table.Cells {
-			t.Logf("第%d行------------------\n", i+1)
-			for _, c := range cell {
-				t.Logf("%s,%s,%s,%d,%s\n", c.Axis, c.Value, c.Formula, c.CalcFormulaScanCnt, c.Err)
-			}
-		}
-		t.Log("--------------------------")
+		//t.Logf("%+v\n", table)
+		//for i, cell := range table.Cells {
+		//	t.Logf("第%d行------------------\n", i+1)
+		//	for _, c := range cell {
+		//		t.Logf("%s,%s,%s,%d,%s\n", c.Axis, c.Value, c.Formula, c.CalcFormulaScanCnt, c.Err)
+		//	}
+		//}
+		//t.Log("--------------------------")
 		t.Log(table.FomatToHtml())
 	}
 }
@@ -73,7 +72,6 @@ func TestDecomposeFuncPars(t *testing.T) {
 		}
 	}
 }
-*/
 
 func TestSetCell(t *testing.T) {
 	cell := new(TableCell)
