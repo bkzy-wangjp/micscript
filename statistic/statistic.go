@@ -2,13 +2,16 @@
 package statistic
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
 	"github.com/bkzy/micscript/filter"
 
-	"github.com/bkzy/micscript"
+	mics "github.com/bkzy/micscript"
 	"github.com/bkzy/micscript/numgo"
 )
 
@@ -88,12 +91,14 @@ func (tsds Tsds) Statistics(cfg int, group ...int) StatisticData {
 		sum += v0 //算术累积值
 	}
 	diff = v0 - diff   //差值
-	if plusdiff < v0 { //初始值小于结束值
+	if plusdiff > v0 { //初始值大于结束值
 		if count <= 2 { //如果原始数据小于等于2个
-			plusdiff = v0 //等于最后值
+			plusdiff = plusdiff - v0 //等于最后值
 		} else {
 			plusdiff = max - plusdiff + v0 //最大值-第一个值+最后一个值
 		}
+	} else {
+		plusdiff = v0 - plusdiff
 	}
 	if count > 0 { //算术平均值
 		cavg = sum / float64(count)
@@ -533,4 +538,20 @@ func (tsds Tsds) ButterFilter(N int, Wn interface{}, btype string, fs ...float64
 	}
 	err = tsds.PutArray2Data(arr)
 	return err
+}
+
+//Json格式打印输出结构体
+func StructFormatPrint(msg interface{}, names ...string) {
+	bs, _ := json.Marshal(msg)
+	var out bytes.Buffer
+	json.Indent(&out, bs, "", "\t")
+
+	name := reflect.TypeOf(msg).Name()
+	if len(names) > 0 {
+		name = names[0]
+	}
+	if len(name) > 0 {
+		name += "="
+	}
+	fmt.Printf("%s%v\n", name, out.String())
 }

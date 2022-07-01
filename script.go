@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"fmt"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -20,6 +21,67 @@ func TimeParse(s string, loc ...*time.Location) (time.Time, error) {
 	if len(loc) > 0 {
 		for _, v := range loc {
 			location = v
+		}
+	}
+	if strings.Contains(s, ".") {
+		strs := strings.Split(s, ".") //用.切片
+		dsec := "."                   //小数点后的秒格式
+		tzone := "Z0700"
+		havezone := false //是否包含时区
+		if len(strs) > 1 {
+			dseclen := 0                        //小数部分的长度
+			if strings.Contains(strs[1], "+") { //包含时区
+				havezone = true
+				dotseconds := strings.Split(strs[1], "+") //分割小数的秒和时区
+				dseclen = len(dotseconds[0])
+				if len(dotseconds) > 1 { //时区切片
+					if strings.Contains(dotseconds[1], ":") { //时区切片含有分号
+						tzone = "Z07:00"
+					}
+				}
+			} else {
+				dseclen = len(strs[1])
+			}
+
+			for i := 0; i < dseclen; i++ {
+				dsec += "0"
+			}
+		}
+		layout := "2006-01-02 15:04:05"
+		if strings.Contains(s, "T") {
+			layout = "2006-01-02T15:04:05"
+		}
+		layout += dsec
+		if havezone { //包含时区
+			layout += tzone
+			t, err := time.Parse(layout, s)
+			if err == nil {
+				return t, nil
+			}
+		} else {
+			t, err := time.ParseInLocation(layout, s, location)
+			if err == nil {
+				return t, nil
+			}
+		}
+	} else {
+		if strings.Contains(s, "+") { //包含时区
+			tzone := "Z0700"
+			strs := strings.Split(s, "+") //时区
+			if len(strs) > 1 {            //时区切片
+				if strings.Contains(strs[1], ":") { //时区切片含有分号
+					tzone = "Z07:00"
+				}
+			}
+			layout := "2006-01-02 15:04:05"
+			if strings.Contains(s, "T") {
+				layout = "2006-01-02T15:04:05"
+			}
+			layout += tzone
+			t, err := time.Parse(layout, s)
+			if err == nil {
+				return t, nil
+			}
 		}
 	}
 	t, err := time.ParseInLocation("2006-01-02 15:04:05", s, location)
@@ -99,7 +161,7 @@ func TimeParse(s string, loc ...*time.Location) (time.Time, error) {
 	if err == nil {
 		return t, nil
 	}
-	return t, err
+	return t, fmt.Errorf("The raw time string is:[%s],the error is:[%s]", s, err.Error())
 }
 
 /************************************************************
