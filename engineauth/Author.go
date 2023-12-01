@@ -4,13 +4,13 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	hard "github.com/bkzy-wangjp/Author/Hardinfo"
 	pkcs "github.com/bkzy-wangjp/Author/PKCS"
+	hard "github.com/bkzy/micscript/engineauth/hardinfo"
 
 	"strconv"
 	"strings"
 
-	"github.com/bkzy-wangjp/CRC16"
+	crc16 "github.com/bkzy-wangjp/CRC16"
 )
 
 var (
@@ -20,10 +20,14 @@ var (
 /*
 功能：授权码编码
 输入：cnt:授权数量
+
 	username:被授权用户名
 	mcode:机器码
+
 输出：string:授权码
+
 	bool:机器码校验结果,true=成功,false=失败
+
 时间：2019年11月27日
 作者：wang_jp
 */
@@ -66,8 +70,10 @@ func AuthorizationCodeEncrypt(p_cnt, s_cnt int, username, mcode string) (string,
 功能：检查校验授权码
 输入：authCode:授权码
 输出：cnt:授权数量
+
 	username:被授权用户名
 	ok:校验结果,true=通过,false=不通过
+
 时间：2019年11月27日
 作者：wang_jp
 */
@@ -104,11 +110,15 @@ func AuthorizationCheck(authCode string) (p_cnt, s_cnt, r_cnt int, username stri
 /*
 功能：授权码解码
 输入：keycode:密钥
+
 	authCode:授权码
+
 输出：cnt:授权数量
+
 	username:被授权用户名
 	mcode:从授权码中解析出来的被授权的机器码
 	bool:授权码解码结果,true=成功,false=失败
+
 时间：2019年11月27日
 作者：wang_jp
 */

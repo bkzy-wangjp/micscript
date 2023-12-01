@@ -24165,8 +24165,8 @@ func TestPeakValleySelector(t *testing.T) {
 			}
 		}
 		tt.tsdt.ReplaceLowValue(0.5, 0.0)
-		pvs.New(tt.stv, tt.cp)
-		pvs.DataFillter(tt.tsdt, tt.inin, tt.nz)
+		pvs.New(tt.stv, tt.inin, 0, 0, tt.cp, tt.nz)
+		pvs.DataFillter(tt.tsdt)
 		t.Logf("峰值和:%f,谷之和:%f,峰谷差之和:%f,周期数:%d\n", pvs.PeakSum, pvs.ValleySum, pvs.PVDiffSum, pvs.PeriodCnt)
 		for _, tsd := range pvs.PvDatas {
 			t.Logf("%+v\n", tsd)

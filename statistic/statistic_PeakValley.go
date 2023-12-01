@@ -4,46 +4,64 @@ import (
 	"math"
 )
 
-/************************************************************
-功能:新建峰谷数据选择器
-输入:
-	stdv float64:稳态判据值
-    cp int:连续稳定的数据点数
-输出：无
-时间：2020年2月14日
-编辑：wang_jp
-************************************************************/
-func (pvs *PeakValleySelector) New(stdv float64, cp int) {
+/*
+***********************************************************
+
+	功能:新建峰谷数据选择器
+	输入:
+			stdv float64:稳态判据值
+			inflectionIncrement float64:拐点增量
+			minipeek float64:最小峰值.如果不为0,则峰值必须大于该值
+			maxvalley float64:最大谷值.如果不为0,则谷值必须大于该值
+			cp int:连续稳定的数据点数
+			negativeAsZero int64:如果为0,保留负数;如果为1,将负数作为0处理
+			peekfists ...bool:是否必须先有峰
+	输出：无
+	时间：2020年2月14日
+	编辑：wang_jp
+
+***********************************************************
+*/
+func (pvs *PeakValleySelector) New(stdv, inflectionIncrement, minipeek, maxvalley float64, cp, negativeAsZero int, peekfists ...bool) {
 	if cp < 2 { //连续点不能小于2
 		cp = 2
 	}
 	pvs.ContinuePoint = cp
 	pvs.SteadyValue = stdv
+	pvs.MiniPeek = minipeek
+	pvs.MaxValley = maxvalley
+	pvs.NegativeAsZero = negativeAsZero
+	pvs.InflectionIncrement = inflectionIncrement
+
+	if len(peekfists) > 0 {
+		pvs.PeekFirst = peekfists[0]
+	}
+
 	pvs.dataState = make([]int, cp) //初始化数据状态空间长度
 }
 
-/************************************************************
-功能:数据筛选
-输入:
-	input []TimeSeriesData:输入的数据结构
-    inflectionIncrement float64:拐点增量
-	negativeAsZero int64:如果为0,保留负数;如果为1,将负数作为0处理
-输出：无
-时间：2020年2月14日
-编辑：wang_jp
-************************************************************/
-func (pvs *PeakValleySelector) DataFillter(input Tsds, inflectionIncrement float64, negativeAsZero int) {
+/*
+***********************************************************
+
+	功能:数据筛选
+	输入:
+		input []TimeSeriesData:输入的数据结构
+	输出：无
+	时间：2020年2月14日
+	编辑：wang_jp
+
+***********************************************************
+*/
+func (pvs *PeakValleySelector) DataFillter(input Tsds) {
 	var v0 float64                //上一个循环的值
 	var vt float64                //当前循环的值
 	var dv float64                //增量值
 	var ds int                    //数据状态值，1=升,0=平,-1=降
 	var pvd PeakValleyPeriodValue //一个周期的峰谷值
 	var havepeak, havevalley bool //已经获取到了峰值/谷值
-	pvs.NegativeAsZero = negativeAsZero
-	pvs.InflectionIncrement = inflectionIncrement
 
 	for i, data := range input { //遍历数据
-		if negativeAsZero > 0 && data.Value < 0 {
+		if pvs.NegativeAsZero > 0 && data.Value < 0 {
 			data.Value = 0
 			input[i].Value = 0
 		}
@@ -68,27 +86,45 @@ func (pvs *PeakValleySelector) DataFillter(input Tsds, inflectionIncrement float
 			switch pvs.processStateChange {
 			case 1: //升->平(峰成),取平尾为峰
 				pvd.Peak = input[i-(pvs.ContinuePoint-1)]
-				havepeak = true
+				if (pvs.MiniPeek != 0 && pvd.Peak.Value > pvs.MiniPeek) || pvs.MiniPeek == 0 {
+					havepeak = true
+				}
 				//fmt.Printf("升->平(峰成):%d,%+v,%s\n", pvs.processStateChange, pvs.dataState, pvd.Peak.Time)
 			case 2: //升->降(峰成),取尾去一为峰
 				pvd.Peak = input[i-pvs.ContinuePoint]
-				havepeak = true
+				if (pvs.MiniPeek != 0 && pvd.Peak.Value > pvs.MiniPeek) || pvs.MiniPeek == 0 {
+					havepeak = true
+				}
 				//fmt.Printf("升->降(峰成):%d,%+v,%s\n", pvs.processStateChange, pvs.dataState, pvd.Peak.Time)
 			case 3: //降->平(谷成),取平尾为谷
 				pvd.Valley = input[i-(pvs.ContinuePoint-1)]
-				havevalley = true
+				if (pvs.MaxValley != 0 && pvd.Valley.Value < pvs.MaxValley) || pvs.MaxValley == 0 {
+					if (pvs.PeekFirst && havepeak) || !pvs.PeekFirst {
+						havevalley = true
+					}
+				}
 				//fmt.Printf("降->平(谷成):%d,%+v,%s\n", pvs.processStateChange, pvs.dataState, pvd.Valley.Time)
 			case 4: //降->升(谷成),取尾去一为谷
 				pvd.Valley = input[i-pvs.ContinuePoint]
-				havevalley = true
+				if (pvs.MaxValley != 0 && pvd.Valley.Value < pvs.MaxValley) || pvs.MaxValley == 0 {
+					if (pvs.PeekFirst && havepeak) || !pvs.PeekFirst {
+						havevalley = true
+					}
+				}
 				//fmt.Printf("降->升(谷成):%d,%+v,%s\n", pvs.processStateChange, pvs.dataState, pvd.Valley.Time)
 			case 5: //降->升(谷成),去一为谷
 				pvd.Valley = input[i-1]
-				havevalley = true
+				if (pvs.MaxValley != 0 && pvd.Valley.Value < pvs.MaxValley) || pvs.MaxValley == 0 {
+					if (pvs.PeekFirst && havepeak) || !pvs.PeekFirst {
+						havevalley = true
+					}
+				}
 				//fmt.Printf("降->升(谷成):%d,%+v,%s\n", pvs.processStateChange, pvs.dataState, pvd.Valley.Time)
 			case 6: //升->降(峰成),去一为峰
 				pvd.Peak = input[i-1]
-				havepeak = true
+				if (pvs.MiniPeek != 0 && pvd.Peak.Value > pvs.MiniPeek) || pvs.MiniPeek == 0 {
+					havepeak = true
+				}
 				//fmt.Printf("升->降(峰成):%d,%+v,%s\n", pvs.processStateChange, pvs.dataState, pvd.Peak.Time)
 			}
 			pvs.processStateChange = 0
@@ -101,7 +137,6 @@ func (pvs *PeakValleySelector) DataFillter(input Tsds, inflectionIncrement float
 				pvs.ValleySum += pvd.Valley.Value              //谷之和
 				pvs.PVDiffSum += pvd.PVDiff                    //峰谷差之和
 				pvs.PeriodCnt += 1
-
 			}
 		}
 
@@ -109,15 +144,19 @@ func (pvs *PeakValleySelector) DataFillter(input Tsds, inflectionIncrement float
 	}
 }
 
-/************************************************************
-功能:数据状态改变判断
-输入:
-	increment float64:增量值
-    ds int:当前数据状态
-输出：无
-时间：2020年2月14日
-编辑：wang_jp
-************************************************************/
+/*
+***********************************************************
+
+	功能:数据状态改变判断
+	输入:
+			increment float64:增量值
+			ds int:当前数据状态
+	输出：无
+	时间：2020年2月14日
+	编辑：wang_jp
+
+***********************************************************
+*/
 func (pvs *PeakValleySelector) dataStateChange(increment float64, ds int) {
 	replacer := 10                               //用于代替-1，防止-1与1相加等于0
 	var dssum int                                //数据状态和
