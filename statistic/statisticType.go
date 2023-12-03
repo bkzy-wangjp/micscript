@@ -70,7 +70,7 @@ type PeakValleySelector struct {
 	NegativeAsZero      int     //如果为0,保留负数;如果为1,将负数作为0处理
 	MaxValley           float64 //最大谷值:谷值必须小于该值
 	MiniPeek            float64 //最小峰值:峰值必须大于该值
-	PeekFirst           bool    //先有峰后有谷
+	PeekFirst           int     //{-1:先有谷,0:随机,1:先有峰}
 
 	PeakSum            float64                 //峰之和
 	ValleySum          float64                 //谷之和

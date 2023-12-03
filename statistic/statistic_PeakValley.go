@@ -22,7 +22,7 @@ import (
 
 ***********************************************************
 */
-func (pvs *PeakValleySelector) New(stdv, inflectionIncrement, minipeek, maxvalley float64, cp, negativeAsZero int, peekfists ...bool) {
+func (pvs *PeakValleySelector) New(stdv, inflectionIncrement, minipeek, maxvalley float64, cp, negativeAsZero int, peekfists ...int) {
 	if cp < 2 { //连续点不能小于2
 		cp = 2
 	}
@@ -87,19 +87,23 @@ func (pvs *PeakValleySelector) DataFillter(input Tsds) {
 			case 1: //升->平(峰成),取平尾为峰
 				pvd.Peak = input[i-(pvs.ContinuePoint-1)]
 				if (pvs.MiniPeek != 0 && pvd.Peak.Value > pvs.MiniPeek) || pvs.MiniPeek == 0 {
-					havepeak = true
+					if (pvs.PeekFirst < 0 && havevalley) || pvs.PeekFirst == 0 {
+						havepeak = true
+					}
 				}
 				//fmt.Printf("升->平(峰成):%d,%+v,%s\n", pvs.processStateChange, pvs.dataState, pvd.Peak.Time)
 			case 2: //升->降(峰成),取尾去一为峰
 				pvd.Peak = input[i-pvs.ContinuePoint]
 				if (pvs.MiniPeek != 0 && pvd.Peak.Value > pvs.MiniPeek) || pvs.MiniPeek == 0 {
-					havepeak = true
+					if (pvs.PeekFirst < 0 && havevalley) || pvs.PeekFirst == 0 {
+						havepeak = true
+					}
 				}
 				//fmt.Printf("升->降(峰成):%d,%+v,%s\n", pvs.processStateChange, pvs.dataState, pvd.Peak.Time)
 			case 3: //降->平(谷成),取平尾为谷
 				pvd.Valley = input[i-(pvs.ContinuePoint-1)]
 				if (pvs.MaxValley != 0 && pvd.Valley.Value < pvs.MaxValley) || pvs.MaxValley == 0 {
-					if (pvs.PeekFirst && havepeak) || !pvs.PeekFirst {
+					if (pvs.PeekFirst > 0 && havepeak) || pvs.PeekFirst == 0 {
 						havevalley = true
 					}
 				}
@@ -107,7 +111,7 @@ func (pvs *PeakValleySelector) DataFillter(input Tsds) {
 			case 4: //降->升(谷成),取尾去一为谷
 				pvd.Valley = input[i-pvs.ContinuePoint]
 				if (pvs.MaxValley != 0 && pvd.Valley.Value < pvs.MaxValley) || pvs.MaxValley == 0 {
-					if (pvs.PeekFirst && havepeak) || !pvs.PeekFirst {
+					if (pvs.PeekFirst > 0 && havepeak) || pvs.PeekFirst == 0 {
 						havevalley = true
 					}
 				}
@@ -115,7 +119,7 @@ func (pvs *PeakValleySelector) DataFillter(input Tsds) {
 			case 5: //降->升(谷成),去一为谷
 				pvd.Valley = input[i-1]
 				if (pvs.MaxValley != 0 && pvd.Valley.Value < pvs.MaxValley) || pvs.MaxValley == 0 {
-					if (pvs.PeekFirst && havepeak) || !pvs.PeekFirst {
+					if (pvs.PeekFirst > 0 && havepeak) || pvs.PeekFirst == 0 {
 						havevalley = true
 					}
 				}
@@ -123,7 +127,9 @@ func (pvs *PeakValleySelector) DataFillter(input Tsds) {
 			case 6: //升->降(峰成),去一为峰
 				pvd.Peak = input[i-1]
 				if (pvs.MiniPeek != 0 && pvd.Peak.Value > pvs.MiniPeek) || pvs.MiniPeek == 0 {
-					havepeak = true
+					if (pvs.PeekFirst < 0 && havevalley) || pvs.PeekFirst == 0 {
+						havepeak = true
+					}
 				}
 				//fmt.Printf("升->降(峰成):%d,%+v,%s\n", pvs.processStateChange, pvs.dataState, pvd.Peak.Time)
 			}

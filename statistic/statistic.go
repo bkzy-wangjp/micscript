@@ -322,7 +322,7 @@ func (tsds Tsds) SortByTime(desc ...bool) {
 	if len(desc) > 0 {
 		des = desc[0]
 	}
-	if des == false {
+	if !des {
 		for i := 0; i < vLen-1; i++ {
 			flag = true
 			for j := 0; j < vLen-i-1; j++ {
@@ -415,8 +415,7 @@ func (tsds Tsds) PutArray2Data(arr numgo.Array) error {
 ***********************************************************
 */
 func (tsds Tsds) Quartiles(group ...int) (Lower, Q1, Q2, Q3, Upper, IQR float64) {
-	var darr numgo.Array
-	darr = tsds.GetDataArray()
+	darr := tsds.GetDataArray()
 	Lower, Q1, Q2, Q3, Upper, IQR = darr.Quartiles(group...)
 	return
 }
@@ -614,9 +613,7 @@ func (tsds Tsds) ReplaceLowValue(lowlimit, newvalue float64) {
 */
 func (tsds Tsds) Copy() Tsds {
 	var res Tsds
-	for _, tsd := range tsds {
-		res = append(res, tsd)
-	}
+	res = append(res, tsds...)
 	return res
 }
 
