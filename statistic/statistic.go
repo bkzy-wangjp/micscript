@@ -548,6 +548,34 @@ func (tsds Tsds) MoveWindowFilter(n int, fillvlue ...string) {
 /*
 ***********************************************************
 
+	功能: 旋转门滤波
+	输入:
+		door_width:float64:旋转门的宽度
+	输出:
+		sdts Tsds:过滤的结果
+	说明: 原始数据序列中的未保存点使用紧挨着的上一个保存点的值
+	编辑: wangjp
+	时间: 2023年12月10日
+
+***********************************************************
+*/
+func (tsds Tsds) SdtFillter(door_width float64, maxinterval ...int64) (sdts Tsds) {
+	sdt := NewSdtDoor(door_width, maxinterval...)
+	for i, tsd := range tsds {
+		_, save := sdt.Filter(tsd)
+		if !save {
+			tsd.Value = sdt.LastHis.Value
+			tsds[i] = tsd
+		} else {
+			sdts = append(sdts, tsd)
+		}
+	}
+	return
+}
+
+/*
+***********************************************************
+
 	功能: 过滤掉数据中的奇异点
 	输入: diff float64:阈值
 	输出:

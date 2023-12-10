@@ -1,7 +1,10 @@
 package statistic
 
 import (
+	"fmt"
+	"math"
 	"testing"
+	"time"
 )
 
 func TestBaseStatistics(t *testing.T) {
@@ -24171,5 +24174,23 @@ func TestPeakValleySelector(t *testing.T) {
 		for _, tsd := range pvs.PvDatas {
 			t.Logf("%+v\n", tsd)
 		}
+	}
+}
+
+func TestSdt(t *testing.T) {
+	var tsdts Tsds
+	now := time.Now()
+	for i := 0; i < 360; i++ {
+		var tsd TimeSeriesData
+		tsd.Time = now.Add(time.Duration(i) * time.Second)
+		tsd.Value = math.Sin(math.Pi / 180 * float64(i))
+		tsdts = append(tsdts, tsd)
+		fmt.Printf("%+v\n", tsd)
+	}
+
+	tsdt := tsdts.SdtFillter(0.0001)
+	fmt.Print("--------------------------------\n")
+	for _, ts := range tsdt {
+		fmt.Printf("%+v\n", ts)
 	}
 }

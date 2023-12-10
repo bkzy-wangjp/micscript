@@ -64,22 +64,23 @@ type StatisticData struct { //统计数据结构
 }
 
 type PeakValleySelector struct {
-	InflectionIncrement float64 //拐点增量
-	SteadyValue         float64 //稳态判据值
-	ContinuePoint       int     //连续稳定的数据点数
-	NegativeAsZero      int     //如果为0,保留负数;如果为1,将负数作为0处理
-	MaxValley           float64 //最大谷值:谷值必须小于该值
-	MiniPeek            float64 //最小峰值:峰值必须大于该值
-	PeekFirst           int     //{-1:先有谷,0:随机,1:先有峰}
+	MiniPvd        float64 //最小峰谷差
+	SteadyValue    float64 //稳态判据值
+	NegativeAsZero int     //如果为0,保留负数;如果为1,将负数作为0处理
+	MaxValley      float64 //最大谷值:谷值必须小于该值
+	MiniPeek       float64 //最小峰值:峰值必须大于该值
+	PeekFirst      int     //{-1:先有谷,0:随机,1:先有峰}
 
-	PeakSum            float64                 //峰之和
-	ValleySum          float64                 //谷之和
-	PVDiffSum          float64                 //峰谷差之和
-	PeriodCnt          int                     //周期数
-	PvDatas            []PeakValleyPeriodValue //峰谷周期值
-	dataState          []int                   //数据状态,数组长度由ContinuePoint决定.1=升,0=平,-1=降
-	processState       int                     //过程状态,1=升,0=平,-1=降
-	processStateChange int                     //过程状态发生改变的值,1=升->平(峰成),2=升->降(峰成),3=降->平(谷成),4=降->升(谷成),5=降->升(谷成,由单个增量判断),6=升->降(峰成,由单个增量判断),0=其他
+	PeakSum   float64                 //峰之和
+	ValleySum float64                 //谷之和
+	PVDiffSum float64                 //峰谷差之和
+	PeriodCnt int                     //周期数
+	PvDatas   []PeakValleyPeriodValue //峰谷周期值
+
+	processState        int      //过程状态,1=升,0=平,-1=降
+	processStateChange  int      //过程状态发生改变的值; -2:达谷,-1:降,0:平,1:升,2:达峰
+	_processStateChange int      //上次过程状态发生改变的值
+	sdt                 *SdtDoor //旋转门
 }
 
 type PeakValleyPeriodValue struct { //峰谷周期值
