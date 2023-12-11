@@ -48,8 +48,7 @@ func (pvs *PeakValleySelector) DataFillter(input Tsds) {
 	var save bool                 //是否保存
 	var pvd PeakValleyPeriodValue //一个周期的峰谷值
 	var havepeak, havevalley bool //已经获取到了峰值/谷值
-	//fmt.Println("开始旋转门过滤")
-	for i, data := range input { //遍历数据
+	for i, data := range input {  //遍历数据
 		//去除负数
 		if pvs.NegativeAsZero > 0 && data.Value < 0 {
 			data.Value = 0
@@ -59,11 +58,9 @@ func (pvs *PeakValleySelector) DataFillter(input Tsds) {
 		if !save {
 			input[i] = pvs.sdt.LastHis
 		}
-		//fmt.Printf("状态:%d, 保存:%t, 数据:%v\n", ds, save, data)
 
 		if save { //检查的数据已经大于了连续点数
 			pvs.processStatus(ds) //数据状态改变
-			//fmt.Printf("数据点切换: %v,过程状态:%d,%d\n", data, pvs._processStateChange, pvs.processStateChange)
 			switch pvs.processStateChange {
 			case -2: //谷成
 				if pvs._processStateChange == -2 {
@@ -78,43 +75,33 @@ func (pvs *PeakValleySelector) DataFillter(input Tsds) {
 						((pvs.PeekFirst > 0 && havepeak) && (pvd.Peak.Value-pvd.Valley.Value > pvs.MiniPvd)) ||
 						pvs.PeekFirst == 0 {
 						havevalley = true
-						//fmt.Printf("真谷成:%d,%v\n", pvs.processStateChange, pvd.Valley)
 					}
 				}
-				//fmt.Printf("谷成:%d,%v;MaxValley:%f,PeekFirst:%d,HavePeek:%t,HaveValley:%t\n",
-				//	pvs.processStateChange, pvd.Valley, pvs.MaxValley, pvs.PeekFirst, havepeak, havevalley)
 			case -1: //降
 				pvd.Valley = data
 				if pvs._processStateChange == 1 {
 					pvd.Peak = pvs.sdt.LastHis
-					//fmt.Printf("峰成:%d,%v\n", pvs.processStateChange, pvd.Peak)
 					if (pvs.MiniPeek != 0 && pvd.Peak.Value > pvs.MiniPeek) || pvs.MiniPeek == 0 {
 						if (pvs.PeekFirst > 0 && !havevalley) ||
 							((pvs.PeekFirst < 0 && havevalley) && (pvd.Peak.Value-pvd.Valley.Value > pvs.MiniPvd)) ||
 							pvs.PeekFirst == 0 {
 							havepeak = true
-							//fmt.Printf("真峰成:%d,%v\n", pvs.processStateChange, pvd.Peak)
 						}
 					}
 				}
-				//fmt.Printf("降:%d,%v\n", pvs.processStateChange, pvd.Peak)
 			//case 0: //平
-			//fmt.Printf("平:%d,%v\n", pvs.processStateChange, data)
 			case 1: //升
 				pvd.Peak = data
 				if pvs._processStateChange == -1 {
 					pvd.Valley = pvs.sdt.LastHis
-					//fmt.Printf("谷成:%d,%v\n", pvs.processStateChange, pvd.Valley)
 					if (pvs.MaxValley != 0 && pvd.Valley.Value < pvs.MaxValley) || pvs.MaxValley == 0 {
 						if (pvs.PeekFirst < 0 && !havepeak) ||
 							((pvs.PeekFirst > 0 && havepeak) && (pvd.Peak.Value-pvd.Valley.Value > pvs.MiniPvd)) ||
 							pvs.PeekFirst == 0 {
 							havevalley = true
-							//fmt.Printf("真谷成:%d,%v\n", pvs.processStateChange, pvd.Valley)
 						}
 					}
 				}
-				//fmt.Printf("升:%d,%v\n", pvs.processStateChange, pvd.Valley)
 			case 2: //峰成
 				if pvs._processStateChange == 2 {
 					if pvs.sdt.LastHis2.Value > pvd.Peak.Value {
@@ -128,13 +115,9 @@ func (pvs *PeakValleySelector) DataFillter(input Tsds) {
 						((pvs.PeekFirst < 0 && havevalley) && (pvd.Peak.Value-pvd.Valley.Value > pvs.MiniPvd)) ||
 						pvs.PeekFirst == 0 {
 						havepeak = true
-						//fmt.Printf("真峰成:%d,%v\n", pvs.processStateChange, pvd.Peak)
 					}
 				}
-				//fmt.Printf("峰成:%d,%v;MaxValley:%f,PeekFirst:%d,HavePeek:%t,HaveValley:%t\n",
-				//	pvs.processStateChange, pvd.Peak, pvs.MiniPeek, pvs.PeekFirst, havepeak, havevalley)
 			default:
-				//fmt.Printf("未定义状态:%d\n", pvs.processStateChange)
 			}
 			if havepeak && havevalley { //已经获取了峰值和谷值
 				pvd.PVDiff = pvd.Peak.Value - pvd.Valley.Value //峰谷值之差
