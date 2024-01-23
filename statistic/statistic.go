@@ -144,8 +144,7 @@ func (tsds Tsds) Statistics(cfg int, group ...int) StatisticData {
 	summary.EndTime = edt.Format(_TIME_LYOUT)
 
 	if cfg > 0 { //是否需要高级统计
-		var nga numgo.Array
-		nga = dataArr
+		nga := numgo.Array(dataArr)
 		mode, gd, dmp := nga.Mode(group...)                     //求众数
 		_, sd, std, se, ske, kur := nga.CalcAdvangceStatistic() //求标准偏差等
 
@@ -351,6 +350,39 @@ func (tsds Tsds) SortByTime(desc ...bool) {
 			}
 		}
 	}
+}
+
+/*
+***********************************************************
+
+	功能:按时间范围提取数据
+	输入:
+		stt,edt string:开始时间和结束时间
+	输出:
+		Tsds:截取到的时序数据范围
+		error:错误信息
+	时间:2024年01月16日
+	编辑:wang_jp
+
+***********************************************************
+*/
+func (tsds Tsds) Extract(stt, edt string) (Tsds, error) {
+	start, err := TimeParse(stt)
+	if err != nil {
+		return nil, fmt.Errorf("start time format error")
+	}
+	endt, err := TimeParse(edt)
+	if err != nil {
+		return nil, fmt.Errorf("end time format error")
+	}
+	tsds.SortByTime()
+	var rsts Tsds
+	for _, tsd := range tsds {
+		if tsd.Time.UnixNano() >= start.UnixNano() && tsd.Time.UnixNano() <= endt.UnixNano() {
+			rsts = append(rsts, tsd)
+		}
+	}
+	return rsts, nil
 }
 
 /*
